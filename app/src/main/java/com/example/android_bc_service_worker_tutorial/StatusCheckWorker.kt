@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class StatusCheckWorker(appContext: Context, workerParams: WorkerParameters) :
@@ -21,7 +22,7 @@ class StatusCheckWorker(appContext: Context, workerParams: WorkerParameters) :
 
         val statusCheckRequest = OneTimeWorkRequestBuilder<StatusCheckWorker>()
             .setConstraints(constraints)
-            .setInitialDelay(2, TimeUnit.MINUTES)
+            .setInitialDelay(10, TimeUnit.SECONDS)
             .build()
 
         WorkManager.getInstance(applicationContext).enqueue(statusCheckRequest)
@@ -39,7 +40,14 @@ class StatusCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         Log.i("worker_bluetooth", "Bluetooth is ${if (isBluetoothEnabled) "Enabled" else "Disabled"}")
         Log.i("worker_airplane", "Airplane mode is ${if (isAirplaneModeOn) "On" else "Off"}")
         rescheduleWork()
+        val logMessage = "${System.currentTimeMillis()} - Bluetooth is ${if (isBluetoothEnabled) "Enabled" else "Disabled"}, Airplane mode is ${if 
+                (isAirplaneModeOn) "On" else "Off"}\n"
+        writeLogToFile(logMessage)
         return Result.success()
+    }
+    private fun writeLogToFile(logMessage: String) {
+        val logFile = File(applicationContext.filesDir, "status_logs.txt")
+        logFile.appendText(logMessage)
     }
 }
 
