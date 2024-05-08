@@ -16,10 +16,14 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +32,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import java.io.File
 
 
 class MainActivity : ComponentActivity() {
@@ -50,7 +55,8 @@ class MainActivity : ComponentActivity() {
 
 
         setContent {
-            BluetoothStatusDisplay(bluetoothStatus)
+            LogDisplayScreen(this)
+//            BluetoothStatusDisplay(bluetoothStatus)
         }
 
         val bluetoothStatusReceiver = object : BroadcastReceiver() {
@@ -93,7 +99,14 @@ class MainActivity : ComponentActivity() {
 
 }
 
-
+fun readLogsFromFile(context: Context): List<String> {
+    val logFile = File(context.filesDir, "status_logs.txt")
+    return if (logFile.exists()) {
+        logFile.readLines().reversed() // Reverse the list to show the latest log first
+    } else {
+        emptyList()
+    }
+}
 @Composable
 fun BluetoothStatusDisplay(status: String) {
     Column(
@@ -104,7 +117,19 @@ fun BluetoothStatusDisplay(status: String) {
 
     }
 }
+@Composable
+fun LogDisplayScreen(context: Context) {
+    val logs = remember { mutableStateOf(readLogsFromFile(context)) }
 
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(logs.value) { log ->
+            Text(text = log)
+            Divider()
+        }
+    }
+}
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
